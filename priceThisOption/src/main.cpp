@@ -41,13 +41,13 @@ class asianOption {
   public:
     // Constructor
     asianOption(
-      double price,
+      double strike,
       double spread,
       double vol,
       double r,
       int t
     ) {
-      price_ = price;
+      strike_ = strike;
       r_ = r;
       vol_ = vol;
       t_ = t;
@@ -78,7 +78,7 @@ class asianOption {
 
   private:
     // Declare the attributes of the class
-    double price_, vol_, r_, t_, spread_;
+    double strike_, vol_, r_, t_, spread_;
     int t_years_; // full years
     int t_days_; // remainder in days
 
@@ -95,7 +95,7 @@ class asianOption {
       normal_distribution<> d{0, dailyVolatility};
 
       // Current price
-      double thisPrice = price_;
+      double thisPrice = strike_;
 
       // Holds all the prices
       vector<double> pricePath;
@@ -109,7 +109,7 @@ class asianOption {
       }
 
       // Return geometric mean
-      // Rolling sum would not work beacause of overflow
+      // Rolling sum approach would not work beacause of overflow
       return geometric_mean(pricePath);
     }
 
@@ -118,9 +118,24 @@ class asianOption {
     // Get one path, discounted etc.
     double getOneSimulation(){
       double instrumentPrice = getOnePrice();
-      double optionValue;
+      double optionValue = 0;
 
+      // Long call OTM
+      optionValue += max(0, instrumentPrice - (strike_ + spread_));
 
+      // Long put ATM
+      optionValue += max(0, (strike_ - spread_) - instrumentPrice);
+
+      // discount by full years
+      for(int i = 1; i <= t_years_; i++) {
+        optionValue = optionValue / (1 + r_);
+      }
+
+      // Discount by remaining days
+      optionValue = optionValue / (1 + r_ * (t_days_ / 252) );
+
+      // Return the discounted value
+      return optionValue;
     }
 };
 

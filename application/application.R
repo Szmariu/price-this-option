@@ -28,7 +28,7 @@ getGeometricAsianPrice(
   nreps = 100000
 )
 
-### Price vs. strike
+### Price vs. price
 # Define the wrapper
 testPrice <- function(price){
   getGeometricAsianPrice(
@@ -52,21 +52,22 @@ price <- seq(1, 200, by = 5)
 result <- sapply(price, testPrice)
 
 # Plot the results
+# Warnings are normal, there are missing fonts for the theme 
 tibble(price, result) %>%
   ggplot(aes(x = price, y = result)) +
   geom_area(fill = orange, color = orange, alpha = 0.5) +
   geom_point(size = 2, color = orange) +
   labs(
-    title = "Price of the options vs. strike price",
+    title = "Price of the options vs. price of the instrument",
     subtitle = "Ceteris paribus",
-    x     = "Strike price",
+    x     = "Price of the instrument",
     y     = "Price of the options"
   )
 
 
 
 
-### Volatility vs. strike
+### Volatility vs. price
 testVolatility <- function(vol){
   getGeometricAsianPrice(
     price = 75,
@@ -96,6 +97,50 @@ tibble(vol, result) %>%
   labs(
     title = "Price of the options vs. annualized volatility",
     subtitle = "Ceteris paribus",
-    x     = "Strike price",
+    x     = "Annualized volatility",
     y     = "Price of the options"
+  )
+
+
+
+### Volatility and instrument price vs. price
+testBoth <- function(price, vol){
+  getGeometricAsianPrice(
+    price = price,
+    spread = 5,
+    vol = vol,
+    r = 0.07,
+    t = 252,
+    nreps = 10000 
+  )
+}
+
+# Make all posible combinations
+grid <- expand.grid(price = price, vol = vol)
+
+# Run, takes more than a minute for all 840 variants
+result <- mapply(testBoth, grid$price, grid$vol)
+
+# Save as a df
+result.df <- data.frame(grid, result)
+
+# Plot the results
+result.df %>% 
+  ggplot(aes(x = price, y = result, colour = vol, group = vol)) +
+    geom_line() +
+    geom_point() + 
+    scale_color_gradient(low = purple, high = orange) +
+    labs(
+      title = "Price of the options vs. annualized volatility",
+      subtitle = "Ceteris paribus",
+      x     = "Strike price",
+      y     = "Price of the options",
+      color = 'Annualized 
+volatility
+      '
+    ) + 
+  theme(
+    legend.title = element_text(size = 14),
+    legend.key.size = unit(1.5, "lines"),
+    legend.text = element_text(size = 14)
   )

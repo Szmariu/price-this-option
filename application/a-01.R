@@ -1,7 +1,3 @@
-# cpp25
-# Paweł Sakowski
-# University of Warsaw
-# 2020-05-05
 
 library(tidyverse)
 library(ggplot2)

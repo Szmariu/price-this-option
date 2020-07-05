@@ -202,3 +202,66 @@ double getGeometricAsianPrice(
 
 # Results
 
+
+```{R results, cache = TRUE, error = FALSE, message=FALSE, warning=FALSE}
+library("priceThisOption")
+library(tidyverse) # %>% etc.
+library(ggplot2) # nice plots
+library(ggthemes) 
+library(ggtech) # For the airbnb theme
+
+theme_set(theme_airbnb_fancy())
+orange = "#FFB400"
+purple = "#7B0051"
+
+### Volatility and instrument price vs. price
+# Define the wrapper function
+testBoth <- function(price, vol){
+  getGeometricAsianPrice(
+    price = price,
+    spread = 5,
+    vol = vol,
+    r = 0.07,
+    t = 252,
+    nreps = 10000
+  )
+}
+
+# A sqeuence of prices
+price <- seq(1, 100, by = 5)
+
+# A sqeuence of prices
+vol <- seq(0, 0.75, by = 0.05)
+
+# Make all posible combinations
+grid <- expand.grid(price = price, vol = vol)
+
+# Run, takes more than a minute for all variants
+result <- mapply(testBoth, grid$price, grid$vol)
+
+# Save as a df
+result.df <- data.frame(grid, result)
+
+# Plot the results
+result.df %>% 
+  ggplot(aes(x = price, y = result, colour = vol, group = vol)) +
+    geom_line() +
+    geom_point() + 
+    scale_color_gradient(low = purple, high = orange) +
+    labs(
+      title = "Price of the strategy",
+      subtitle = "Price of the underlying instrument and annualived volatility",
+      x     = "Price of the instrument",
+      y     = "Price of the strategy",
+      color = 'Annualized 
+volatility
+      '
+    ) + 
+  theme(
+    legend.title = element_text(size = 14),
+    legend.key.size = unit(1.5, "lines"),
+    legend.text = element_text(size = 14),
+    text = element_text(family = "sans"),
+    plot.title = element_text(family = "sans")
+  )
+```

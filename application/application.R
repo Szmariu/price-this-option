@@ -136,7 +136,7 @@ result.df %>%
     scale_color_gradient(low = purple, high = orange) +
     labs(
       title = "Price of the strategy",
-      subtitle = "Price of the underlying instrument and annualived volatility",
+      subtitle = "Price of the underlying instrument and annualized volatility",
       x     = "Price of the instrument",
       y     = "Price of the strategy",
       color = 'Annualized 

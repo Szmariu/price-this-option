@@ -1,6 +1,6 @@
 ---
 title: "Price this option package"
-subtitle: "Pricing geometric asian long strangle option strategy using rcpp"
+subtitle: "Pricing geometric Asian long strangle option strategy using rcpp"
 author: "Michał Szałanski"
 output: pdf_document
 ---
@@ -11,12 +11,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Objective
 The goal of this project is to find a fair price of the *long strangle* option strategy, using Geometric Asian Options.
-A Monte Carlo approach is necessary, because it is not possible to determine the price analitically. 
-There exist some solutions that will give aproximate prices, but only Monte Carlo will
-find them with aribrary precision (*theoritically*, given enough computational power). 
+A Monte Carlo approach is necessary, because it is not possible to determine the price analytically. 
+There exist some solutions that will give approximate prices, but only Monte Carlo will
+find them with arbitrally precision (*theoretically*, given enough computational power). 
 
 # Assumptions
-Following assumtions are set:    
+Following assumptions are set:    
 
 - Annualized volatility rate: 25%
 - Annualized risk-free rate: 7%
@@ -31,8 +31,8 @@ Price of underlying instrument is 75. Chosen spread between underlying price and
 
 The portfolio will contain: 
 
-- One geometric asian long call option with strike price of 80
-- One geometric asian long put option with strike price of 70
+- One geometric Asian long call option with strike price of 80
+- One geometric Asian long put option with strike price of 70
 
 The time to maturity will be 252 working days, exactly one year.   
 
@@ -42,21 +42,21 @@ more or less the same. Overall, the loss in this strategy is limited, but the pr
 
 ![Ilustration of the long strangle stragety - source https://comparic.pl/opcje-waniliowe-strategia-rozszerzonego-stelaza-strangle/](img/strangle.jpg)
 
-A good target for this strategy are volitile stocks, such as *Tesla*, 
-that can swing in both directions. *Bitcoin* would be another usefull example, but the market for 
+A good target for this strategy are volatile stocks, such as *Tesla*, 
+that can swing in both directions. *Bitcoin* would be another useful example, but the market for 
 crypto options is not well regulated.   
 
 ![Volatility of the Tesla stock - source https://www.marketwatch.com/story/heres-what-it-will-take-for-teslas-stock-to-recover-from-the-coronavirus-selloff-2020-03-18](img/tesla.jpg)
 
 \newpage
 
-The *geometric asian options* are a type of exotic options that are based of the geometric average 
-of the price of the underlying asset, not on the last price. They naturally lower the volatilility 
+The *geometric Asian options* are a type of exotic options that are based of the geometric average 
+of the price of the underlying asset, not on the last price. They naturally lower the volatility 
 significantly, and because of that they are cheaper. They are good, if one wants to actually 
 protect their assets over the period, not only play for the monetary gain. 
 
 Overall, the strategy would probably not perform good, since the volatility lowering nature of *geometric 
-asian options* directly conflicts with the *long strangle* strategy, that seeks high volatility. 
+Asian options* directly conflicts with the *long strangle* strategy, that seeks high volatility. 
 
 # Code
 Full code for the package is presented below with comments for each part.
@@ -240,9 +240,9 @@ purple = "#7B0051"
 ## Calculating the price of the portfolio
 For the given portfolio and set assumptions, the fair price of the strategy is 
 around 4.19. It is quite low, compared to the price of the instrument,
-even given that the time to matuirty is one year. This is an effect of the
-direct opposite effect of the geometric asian options, that lower volatility 
-and long strangle strategy, that favors high volatiliy. 
+even given that the time to maturity is one year. This is an effect of the
+direct opposite effect of the geometric Asian options, that lower volatility 
+and long strangle strategy, that favors high volatility. 
 ```{R OnePrice, cache = TRUE}
 print(
   paste0(
@@ -306,7 +306,7 @@ result.df %>%
     scale_color_gradient(low = purple, high = orange) +
     labs(
       title = "Price of the strategy",
-      subtitle = "Price of the underlying instrument and annualived volatility",
+      subtitle = "Price of the underlying instrument and annualized volatility",
       x     = "Price of the instrument",
       y     = "Price of the strategy",
       color = 'Annualized 

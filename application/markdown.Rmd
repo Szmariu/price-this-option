@@ -1,7 +1,7 @@
 ---
-title: "Price this option - pricing geometric asian long strangle option strategy using rcpp"
+title: "Price this option package"
+subtitle: "Pricing geometric asian long strangle option strategy using rcpp"
 author: "Michał Szałanski"
-date: "5 07 2020"
 output: pdf_document
 ---
 
@@ -10,15 +10,16 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Objective
-The goal of this project is to find a fair price of the *long strangle* option strategy, using Geometric Asian Options. A Monte Carlo approach is necessary,
-because it is not possible to determine the price analitically. There exist some solutions that will give aproximate prices, but only 
-Monte Carlo will find them with aribrary precision (*theoritically*, given enough computational power). 
+The goal of this project is to find a fair price of the *long strangle* option strategy, using Geometric Asian Options.
+A Monte Carlo approach is necessary, because it is not possible to determine the price analitically. 
+There exist some solutions that will give aproximate prices, but only Monte Carlo will
+find them with aribrary precision (*theoritically*, given enough computational power). 
 
 # Assumptions
 Following assumtions are set:    
 
-- Annualized volatility rate = 25%
-- Annualized risk-free rate = 7%
+- Annualized volatility rate: 25%
+- Annualized risk-free rate: 7%
 - Number of Monte Carlo rounds per each variant: 10 000
 - Working days in a year: 252
 - Prices change once per day
@@ -26,15 +27,39 @@ Following assumtions are set:
 - No limit on the maximal time to maturity (for practical values)
 
 # Portfolio
-Price of underlying instrument is 75. Chosen spread is 5.  
+Price of underlying instrument is 75. Chosen spread between underlying price and strike is 5.  
 
 The portfolio will contain: 
 
-- One long call option for: 80
-- One long put option for: 70
+- One geometric asian long call option with strike price of 80
+- One geometric asian long put option with strike price of 70
+
+The time to maturity will be 252 working days, exactly one year.   
+
+The *long strangle* option strategy is in interesting construct, allowing the person to benefit from 
+significant changes in the price, in both directions. The strategy loses money if the prices remains 
+more or less the same. Overall, the loss in this strategy is limited, but the profit is not. 
+
+![Ilustration of the long strangle stragety - source https://comparic.pl/opcje-waniliowe-strategia-rozszerzonego-stelaza-strangle/](img/strangle.jpg)
+
+A good target for this strategy are volitile stocks, such as *Tesla*, 
+that can swing in both directions. *Bitcoin* would be another usefull example, but the market for 
+crypto options is not well regulated.   
+
+![Volatility of the Tesla stock - source https://www.marketwatch.com/story/heres-what-it-will-take-for-teslas-stock-to-recover-from-the-coronavirus-selloff-2020-03-18](img/tesla.jpg)
+
+\newpage
+
+The *geometric asian options* are a type of exotic options that are based of the geometric average 
+of the price of the underlying asset, not on the last price. They naturally lower the volatilility 
+significantly, and because of that they are cheaper. They are good, if one wants to actually 
+protect their assets over the period, not only play for the monetary gain. 
+
+Overall, the strategy would probably not perform good, since the volatility lowering nature of *geometric 
+asian options* directly conflicts with the *long strangle* strategy, that seeks high volatility. 
 
 # Code
-Full code for the package is below. Full coments inside. 
+Full code for the package is presented below with comments for each part.
 
 ```{Rcpp cpp, eval = FALSE}
 // Rcpp magic
@@ -59,25 +84,24 @@ class asianOption {
   public:
     // Constructor
     asianOption(
-      double strike,
+      double price,
       double spread,
       double vol,
       double r,
       int t
     ) {
-      strike_ = strike;
+      price_ = price;
       r_ = r;
       vol_ = vol;
       t_ = t;
-      spread_ = spread; // difference between strike price and what options are bought
-                        // Since they neet to be OTM and INT, not ATM
+      spread_ = spread; 
+      // difference between instrument price and what options are bought
+      // Since they neet to be OTM and INT, not ATM
 
       // Conver t into years and days
       t_years_ = 252 / t;
       t_days_ = t - (t_years_ * 252);
     }
-
-
 
     // Run a simple Monte Carlo simulation
     double runSimulation(int nreps) {
@@ -96,15 +120,13 @@ class asianOption {
 
   private:
     // Declare the attributes of the class
-    double strike_, vol_, r_, t_, spread_;
+    double price_, vol_, r_, t_, spread_;
     int t_years_; // full years
     int t_days_; // remainder in days
 
-
-
     // Geometric mean
-    // Taken from here: 
-    // (full link to the source in the code, here it is too long)
+    // Taken from here: (link in the package)
+    // Here it is too long ;) 
     // Should mitigate the problem of overflowing
     // Could use the more complex bucket one version,
     // but should be fine for options of 10+ years so no need
@@ -124,8 +146,6 @@ class asianOption {
       return pow( numeric_limits<double>::radix, ex * invN) * pow(m, invN);
     }
 
-
-
     // Return one price after t
     // This allows for more than a year
     // I guess the calculation of the price with volatility may not exactly be correct
@@ -137,7 +157,7 @@ class asianOption {
       normal_distribution<> d{1, dailyVolatility};
 
       // Current price
-      double thisPrice = strike_;
+      double thisPrice = price_;
 
       // Holds all the prices
       vector<double> pricePath;
@@ -163,10 +183,10 @@ class asianOption {
       double optionValue = 0;
 
       // Long call OTM
-      optionValue += max(0.0, instrumentPrice - (strike_ + spread_));
+      optionValue += max(0.0, instrumentPrice - (price_ + spread_));
 
       // Long put ATM
-      optionValue += max(0.0, (strike_ - spread_) - instrumentPrice);
+      optionValue += max(0.0, (price_ - spread_) - instrumentPrice);
 
       // discount by full years
       for(int i = 1; i <= t_years_; i++) {
@@ -202,8 +222,10 @@ double getGeometricAsianPrice(
 
 # Results
 
-
-```{R results, cache = TRUE, error = FALSE, message=FALSE, warning=FALSE}
+## Libraries
+Load all the necessary libraries, including the custom one. For plotting ggtech is 
+a great ggplot theme, but it is quite buggy. 
+```{R libraries, message = FALSE, warning = FALSE}
 library("priceThisOption")
 library(tidyverse) # %>% etc.
 library(ggplot2) # nice plots
@@ -213,7 +235,41 @@ library(ggtech) # For the airbnb theme
 theme_set(theme_airbnb_fancy())
 orange = "#FFB400"
 purple = "#7B0051"
+```
 
+## Calculating the price of the portfolio
+For the given portfolio and set assumptions, the fair price of the strategy is 
+around 4.19. It is quite low, compared to the price of the instrument,
+even given that the time to matuirty is one year. This is an effect of the
+direct opposite effect of the geometric asian options, that lower volatility 
+and long strangle strategy, that favors high volatiliy. 
+```{R OnePrice, cache = TRUE}
+print(
+  paste0(
+    'The price of the option is: ', 
+    round(
+        getGeometricAsianPrice(
+          price = 75,
+          spread = 5,
+          vol = 0.25,
+          r = 0.07,
+          t = 252,
+          nreps = 100000
+        ),
+        2
+    ),
+    '.'
+  )
+)
+```
+
+## Plot the effect of instrument price and volatility on the portfolio price
+Below, the effects of instrument price and volatility are plotted together on one chart.
+As it can be seen, both variables have a nearly linear effect on the price of the strategy. 
+Some non-linearities can be observed for prices lower than 10, but this are probably 
+an artificial effect of the geometric average taken to calculate the option price. 
+
+```{R plot, cache = TRUE}
 ### Volatility and instrument price vs. price
 # Define the wrapper function
 testBoth <- function(price, vol){

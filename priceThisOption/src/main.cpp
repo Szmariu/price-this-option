@@ -42,6 +42,7 @@ class asianOption {
     // Constructor
     asianOption(
       double price,
+      double spread,
       double vol,
       double r,
       int t
@@ -50,6 +51,8 @@ class asianOption {
       r_ = r;
       vol_ = vol;
       t_ = t;
+      spread_ = spread; // difference between strike price and what options are bought
+                        // Since they neet to be OTM and INT, not ATM
 
       // Conver t into years and days
       t_years_ = 252 / t;
@@ -58,7 +61,7 @@ class asianOption {
 
 
 
-    // Run a very simple Monte Carlo simulation
+    // Run a simple Monte Carlo simulation
     double runSimulation(int nreps) {
       // This will hold the sum of all values
       // Double type will be long enough for this instrument
@@ -75,7 +78,7 @@ class asianOption {
 
   private:
     // Declare the attributes of the class
-    double price_, vol_, r_, t_;
+    double price_, vol_, r_, t_, spread_;
     int t_years_; // full years
     int t_days_; // remainder in days
 
@@ -121,16 +124,19 @@ class asianOption {
     }
 };
 
-
+// [[Rcpp::export]]
 double getGeometricAsianPrice(
     double price,
+    double spread,
     double vol,
     double r,
     int t
 ) {
 
-  asianOption thisOption(price, vol, r, t);
+  // Create an object of the main class
+  asianOption thisOption(price, spread, vol, r, t);
 
+  // Run the simulation
   return thisOption.runSimulation(1000);
 }
 

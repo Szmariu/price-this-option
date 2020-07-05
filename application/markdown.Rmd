@@ -1,0 +1,204 @@
+---
+title: "Price this option - pricing geometric asian long strangle option strategy using rcpp"
+author: "Michał Szałanski"
+date: "5 07 2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Objective
+The goal of this project is to find a fair price of the *long strangle* option strategy, using Geometric Asian Options. A Monte Carlo approach is necessary,
+because it is not possible to determine the price analitically. There exist some solutions that will give aproximate prices, but only 
+Monte Carlo will find them with aribrary precision (*theoritically*, given enough computational power). 
+
+# Assumptions
+Following assumtions are set:    
+
+- Annualized volatility rate = 25%
+- Annualized risk-free rate = 7%
+- Number of Monte Carlo rounds per each variant: 10 000
+- Working days in a year: 252
+- Prices change once per day
+- Minimal time to maturity: 1 day
+- No limit on the maximal time to maturity (for practical values)
+
+# Portfolio
+Price of underlying instrument is 75. Chosen spread is 5.  
+
+The portfolio will contain: 
+
+- One long call option for: 80
+- One long put option for: 70
+
+# Code
+Full code for the package is below. Full coments inside. 
+
+```{Rcpp cpp, eval = FALSE}
+// Rcpp magic
+#include <Rcpp.h>
+using namespace Rcpp;
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <random>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+using namespace std;
+
+// For the random number generation
+random_device rd{};
+mt19937 gen{rd()};
+
+// Define the main class
+class asianOption {
+  public:
+    // Constructor
+    asianOption(
+      double strike,
+      double spread,
+      double vol,
+      double r,
+      int t
+    ) {
+      strike_ = strike;
+      r_ = r;
+      vol_ = vol;
+      t_ = t;
+      spread_ = spread; // difference between strike price and what options are bought
+                        // Since they neet to be OTM and INT, not ATM
+
+      // Conver t into years and days
+      t_years_ = 252 / t;
+      t_days_ = t - (t_years_ * 252);
+    }
+
+
+
+    // Run a simple Monte Carlo simulation
+    double runSimulation(int nreps) {
+      // This will hold the sum of all values
+      // Double type will be long enough for this instrument
+      double rollingSum = 0.0;
+
+      // Loop hovever many times we need
+      for (int i = 0; i < nreps; i++) {
+        rollingSum += getOneSimulation();
+      }
+
+      // Return the average value
+      return rollingSum / nreps;
+    }
+
+  private:
+    // Declare the attributes of the class
+    double strike_, vol_, r_, t_, spread_;
+    int t_years_; // full years
+    int t_days_; // remainder in days
+
+
+
+    // Geometric mean
+    // Taken from here: 
+    // (full link to the source in the code, here it is too long)
+    // Should mitigate the problem of overflowing
+    // Could use the more complex bucket one version,
+    // but should be fine for options of 10+ years so no need
+    double geometric_mean(vector<double> const & data){
+      double m = 1.0;
+      long long ex = 0;
+      double invN = 1.0 / data.size();
+
+      for (double x : data)
+      {
+        int i;
+        double f1 = frexp(x, &i);
+        m *= f1;
+        ex += i;
+      }
+
+      return pow( numeric_limits<double>::radix, ex * invN) * pow(m, invN);
+    }
+
+
+
+    // Return one price after t
+    // This allows for more than a year
+    // I guess the calculation of the price with volatility may not exactly be correct
+    // But this is Cpp, not finance
+    double getOnePrice() {
+
+      // Define the distribution
+      double dailyVolatility = vol_ / sqrt(252);
+      normal_distribution<> d{1, dailyVolatility};
+
+      // Current price
+      double thisPrice = strike_;
+
+      // Holds all the prices
+      vector<double> pricePath;
+      pricePath.push_back(thisPrice);
+
+      for(int i = 1; i < t_; i++) {
+        // Move the price slightly (assumes that price cannot be negative)
+        thisPrice = max(0.0, thisPrice * d(gen));
+        // Add the new price to the vector
+        pricePath.push_back(thisPrice);
+      }
+
+      // Return geometric mean
+      // Rolling sum approach would not work beacause of overflow
+      return geometric_mean(pricePath);
+    }
+
+
+
+    // Get one path, discounted etc.
+    double getOneSimulation(){
+      double instrumentPrice = getOnePrice();
+      double optionValue = 0;
+
+      // Long call OTM
+      optionValue += max(0.0, instrumentPrice - (strike_ + spread_));
+
+      // Long put ATM
+      optionValue += max(0.0, (strike_ - spread_) - instrumentPrice);
+
+      // discount by full years
+      for(int i = 1; i <= t_years_; i++) {
+        optionValue = optionValue / (1 + r_);
+      }
+
+      // Discount by remaining days
+      optionValue = optionValue / (1 + r_ * (t_days_ / 252) );
+
+      // Return the discounted value
+      return max(0.0, optionValue);
+    }
+};
+
+// [[Rcpp::export]]
+double getGeometricAsianPrice(
+    double price,
+    double spread,
+    double vol,
+    double r,
+    int t,
+    int nreps
+) {
+
+  // Create an object of the main class
+  asianOption thisOption(price, spread, vol, r, t);
+
+  // Run the simulation
+  return thisOption.runSimulation(nreps);
+}
+```
+
+
+# Results
+

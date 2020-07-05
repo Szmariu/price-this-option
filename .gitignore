@@ -49,3 +49,5 @@ priceThisOption/R/RcppExports.R
 priceThisOption/src/RcppExports.cpp
 
 raw cpp for profiling/code.exe
+
+*.pdf

@@ -41,3 +41,11 @@ vignettes/*.pdf
 priceThisOption/src-i386/
 
 priceThisOption/src-x64/
+
+*.zip
+
+priceThisOption/R/RcppExports.R
+
+priceThisOption/src/RcppExports.cpp
+
+raw cpp for profiling/code.exe

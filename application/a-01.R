@@ -21,37 +21,36 @@ install.packages("../priceThisOption_0.1.0.zip",
 # load to memory
 library("priceThisOption")
 
+getGeometricAsianPrice(
+  price = 75,
+  spread = 5,
+  vol = 0.25,
+  r = 0.07,
+  t = 252,
+  nreps = 10000
+)
 
 
-rcpp_hello()
+testPrice <- function(price){
+  getGeometricAsianPrice(
+    price = price,
+    spread = 5,
+    vol = 0.25,
+    r = 0.07,
+    t = 252,
+    nreps = 10000
+  )
+}
 
+testPrice(100)
 
+price <- seq(1, 200, by = 5)
+result <- sapply(price, testPrice)
 
-
-
-
-
-squareMe(8)
-
-# 3. Call the function
-MCEuropeanOptionPricer(0.5, 100, 95, 0.2, 0.06, 1000000, 0)
-
-# 4. build an R function: option price vs. time to maturity
-MCEuropeanCall <- function(expiry) {
-  return(
-    MCEuropeanOptionPricer(expiry, 100, 95, 0.2, 0.06, 10000, 0))
-  }
-
-# 5. call the function
-MCEuropeanCall(0.5)
-
-# 6. arguments values of values of cunction
-expiry <- seq(0.0001, 0.1, by = 0.001)
-result <- sapply(expiry, MCEuropeanCall)
 
 # 7. same plot using ggplot2 package
-tibble(expiry, result) %>%
-  ggplot(aes(x = expiry, y = result, col = "red")) +
+tibble(price, result) %>%
+  ggplot(aes(x = price, y = result, col = "red")) +
   geom_line() +
   geom_point(size = 2, shape = 21, fill = "white") +
   labs(

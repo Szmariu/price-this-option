@@ -15,27 +15,6 @@ using namespace std;
 random_device rd{};
 mt19937 gen{rd()};
 
-// Geometric mean
-// Taken from here: https://stackoverflow.com/questions/19980319/efficient-way-to-compute-geometric-mean-of-many-numbers
-// Should mitigate the problem of overflowing
-// Could use the more complex bucket one version,
-// but should be fine for options of 10+ years so no need
-double geometric_mean(vector<double> const & data){
-  double m = 1.0;
-  long long ex = 0;
-  double invN = 1.0 / data.size();
-
-  for (double x : data)
-  {
-    int i;
-    double f1 = frexp(x, &i);
-    m *= f1;
-    ex += i;
-  }
-
-  return pow( numeric_limits<double>::radix, ex * invN) * pow(m, invN);
-}
-
 // Define the main class
 class asianOption {
   public:
@@ -84,6 +63,29 @@ class asianOption {
 
 
 
+    // Geometric mean
+    // Taken from here: https://stackoverflow.com/questions/19980319/efficient-way-to-compute-geometric-mean-of-many-numbers
+    // Should mitigate the problem of overflowing
+    // Could use the more complex bucket one version,
+    // but should be fine for options of 10+ years so no need
+    double geometric_mean(vector<double> const & data){
+      double m = 1.0;
+      long long ex = 0;
+      double invN = 1.0 / data.size();
+
+      for (double x : data)
+      {
+        int i;
+        double f1 = frexp(x, &i);
+        m *= f1;
+        ex += i;
+      }
+
+      return pow( numeric_limits<double>::radix, ex * invN) * pow(m, invN);
+    }
+
+
+
     // Return one price after t
     // This allows for more than a year
     // I guess the calculation of the price with volatility may not exactly be correct
@@ -92,7 +94,7 @@ class asianOption {
 
       // Define the distribution
       double dailyVolatility = vol_ / sqrt(252);
-      normal_distribution<> d{0, dailyVolatility};
+      normal_distribution<> d{1, dailyVolatility};
 
       // Current price
       double thisPrice = strike_;
@@ -103,7 +105,7 @@ class asianOption {
 
       for(int i = 1; i < t_; i++) {
         // Move the price slightly (assumes that price cannot be negative)
-        thisPrice = max(0, thisPrice * d(gen));
+        thisPrice = max(0.0, thisPrice * d(gen));
         // Add the new price to the vector
         pricePath.push_back(thisPrice);
       }
@@ -121,10 +123,10 @@ class asianOption {
       double optionValue = 0;
 
       // Long call OTM
-      optionValue += max(0, instrumentPrice - (strike_ + spread_));
+      optionValue += max(0.0, instrumentPrice - (strike_ + spread_));
 
       // Long put ATM
-      optionValue += max(0, (strike_ - spread_) - instrumentPrice);
+      optionValue += max(0.0, (strike_ - spread_) - instrumentPrice);
 
       // discount by full years
       for(int i = 1; i <= t_years_; i++) {
@@ -135,7 +137,7 @@ class asianOption {
       optionValue = optionValue / (1 + r_ * (t_days_ / 252) );
 
       // Return the discounted value
-      return optionValue;
+      return max(0.0, optionValue);
     }
 };
 
@@ -145,14 +147,15 @@ double getGeometricAsianPrice(
     double spread,
     double vol,
     double r,
-    int t
+    int t,
+    int nreps
 ) {
 
   // Create an object of the main class
   asianOption thisOption(price, spread, vol, r, t);
 
   // Run the simulation
-  return thisOption.runSimulation(1000);
+  return thisOption.runSimulation(nreps);
 }
 
 

@@ -11,12 +11,8 @@ library(ggthemes)
 library(ggtech) # For the airbnb theme
 
 theme_set(theme_airbnb_fancy())
-pink = "#FF5A5F"
 orange = "#FFB400"
-blueGreen = "#007A87"
-flesh = "#FFAA91"
 purple = "#7B0051"
-options( scipen = 999 ) #avoiding e10 notation
 
 # Basic test
 getGeometricAsianPrice(
@@ -62,6 +58,10 @@ tibble(price, result) %>%
     subtitle = "Ceteris paribus",
     x     = "Price of the instrument",
     y     = "Price of the options"
+  ) +
+  theme(
+    text = element_text(family = "sans"), # Remove the font warnings
+    plot.title = element_text(family = "sans")
   )
 
 
@@ -99,6 +99,10 @@ tibble(vol, result) %>%
     subtitle = "Ceteris paribus",
     x     = "Annualized volatility",
     y     = "Price of the options"
+  ) +
+  theme(
+    text = element_text(family = "sans"),
+    plot.title = element_text(family = "sans")
   )
 
 
@@ -131,10 +135,10 @@ result.df %>%
     geom_point() + 
     scale_color_gradient(low = purple, high = orange) +
     labs(
-      title = "Price of the options vs. annualized volatility",
-      subtitle = "Ceteris paribus",
-      x     = "Strike price",
-      y     = "Price of the options",
+      title = "Price of the strategy",
+      subtitle = "Price of the underlying instrument and annualived volatility",
+      x     = "Price of the instrument",
+      y     = "Price of the strategy",
       color = 'Annualized 
 volatility
       '
@@ -142,5 +146,7 @@ volatility
   theme(
     legend.title = element_text(size = 14),
     legend.key.size = unit(1.5, "lines"),
-    legend.text = element_text(size = 14)
+    legend.text = element_text(size = 14),
+    text = element_text(family = "sans"),
+    plot.title = element_text(family = "sans")
   )

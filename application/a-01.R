@@ -7,17 +7,30 @@ library(tidyverse)
 library(ggplot2)
 
 # 1. remove package if it exists
-remove.packages("OptionPricer")
-detach("package:OptionPricer", unload = TRUE) # if it still is in memory
+remove.packages("priceThisOption")
+detach("package:priceThisOption", unload = TRUE) # if it still is in memory
 
 # 2. install package and load to memory
-install.packages("../OptionPricer_0.1.0.tar.gz",
-                 type = "source",
+#install.packages("../priceThisOption_0.1.0.tar.gz",
+#                 type = "source",
+#                 repos = NULL)
+
+install.packages("../priceThisOption_0.1.0.zip",
+                 type = "binary",
                  repos = NULL)
 # load to memory
-library("OptionPricer")
+library("priceThisOption")
+
+
 
 rcpp_hello()
+
+
+
+
+
+
+
 squareMe(8)
 
 # 3. Call the function

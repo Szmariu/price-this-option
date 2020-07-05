@@ -5,6 +5,16 @@
 
 using namespace Rcpp;
 
+// test_int
+int test_int();
+RcppExport SEXP _priceThisOption_test_int() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(test_int());
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcpp_hello
 List rcpp_hello();
 RcppExport SEXP _priceThisOption_rcpp_hello() {
@@ -17,6 +27,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_priceThisOption_test_int", (DL_FUNC) &_priceThisOption_test_int, 0},
     {"_priceThisOption_rcpp_hello", (DL_FUNC) &_priceThisOption_rcpp_hello, 0},
     {NULL, NULL, 0}
 };

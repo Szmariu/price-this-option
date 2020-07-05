@@ -11,12 +11,6 @@ remove.packages("OptionPricer")
 detach("package:OptionPricer", unload = TRUE) # if it still is in memory
 
 # 2. install package and load to memory
-
-# from binaries (no need to rebuild)
-install.packages("../OptionPricer_0.1.0_R_x86_64-pc-linux-gnu.tar.gz",
-                 type = "binaries",
-                 repos = NULL)
-# or from source (rebuilt automatically)
 install.packages("../OptionPricer_0.1.0.tar.gz",
                  type = "source",
                  repos = NULL)
